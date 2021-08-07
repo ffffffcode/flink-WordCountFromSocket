@@ -87,7 +87,7 @@
               </filters>
               <transformers>
                 <transformer>
-                  <mainClass>com.boom.WordCountFromSocket</mainClass>
+                  <mainClass>com.boom.WordCountFromSocketWindow10s</mainClass>
                 </transformer>
               </transformers>
             </configuration>
