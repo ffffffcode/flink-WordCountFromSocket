@@ -33,7 +33,7 @@ public class WordCountFromSocket {
 
     public static class Tokenizer implements FlatMapFunction<String, Tuple2<String, Integer>> {
         @Override
-        public void flatMap(String value, Collector<Tuple2<String, Integer>> out) throws Exception {
+        public void flatMap(String value, Collector<Tuple2<String, Integer>> out) {
             String[] stringList = value.split("\\s");
             for (String s : stringList) {
                 // 使用out.collect方法向下游发送数据
@@ -45,7 +45,7 @@ public class WordCountFromSocket {
     private static class WordRedisMapper implements RedisMapper<Tuple2<String, Integer>> {
         @Override
         public RedisCommandDescription getCommandDescription() {
-            return new RedisCommandDescription(RedisCommand.HSET, "flink:work");
+            return new RedisCommandDescription(RedisCommand.HSET, "flink:word:count");
         }
 
         @Override

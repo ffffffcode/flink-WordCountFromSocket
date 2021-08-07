@@ -16,7 +16,6 @@ import org.apache.flink.streaming.connectors.redis.common.mapper.RedisCommandDes
 import org.apache.flink.streaming.connectors.redis.common.mapper.RedisMapper;
 import org.apache.flink.util.Collector;
 
-import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class WordCountFromSocketWindow10s {
@@ -25,7 +24,7 @@ public class WordCountFromSocketWindow10s {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
 
-        DataStream<String> stream = env.socketTextStream("localhost", 9999);
+        DataStream<String> stream = env.socketTextStream("localhost", 10000);
 
         SingleOutputStreamOperator<Tuple2<String, Integer>> sum = stream.flatMap(new Tokenizer()).keyBy(r -> r.f0)
                 .window(TumblingProcessingTimeWindows.of(Time.seconds(10)))
@@ -42,7 +41,7 @@ public class WordCountFromSocketWindow10s {
 
     public static class Tokenizer implements FlatMapFunction<String, Tuple2<String, Integer>> {
         @Override
-        public void flatMap(String value, Collector<Tuple2<String, Integer>> out) throws Exception {
+        public void flatMap(String value, Collector<Tuple2<String, Integer>> out) {
             String[] stringList = value.split("\\s");
             for (String s : stringList) {
                 // 使用out.collect方法向下游发送数据
@@ -54,7 +53,7 @@ public class WordCountFromSocketWindow10s {
     private static class WordRedisMapper implements RedisMapper<Tuple2<String, Integer>> {
         @Override
         public RedisCommandDescription getCommandDescription() {
-            return new RedisCommandDescription(RedisCommand.HSET, "flink:work");
+            return new RedisCommandDescription(RedisCommand.HSET, "flink:word:count:10s");
         }
 
         @Override
@@ -72,9 +71,7 @@ public class WordCountFromSocketWindow10s {
         @Override
         public void process(String key, Context context, Iterable<Tuple2<String, Integer>> in, Collector<Tuple2<String, Integer>> out) {
             AtomicInteger count = new AtomicInteger();
-            in.forEach(stringIntegerTuple2 -> {
-                count.addAndGet(stringIntegerTuple2.f1);
-            });
+            in.forEach(stringIntegerTuple2 -> count.addAndGet(stringIntegerTuple2.f1));
             out.collect(Tuple2.of(key, count.get()));
         }
     }
